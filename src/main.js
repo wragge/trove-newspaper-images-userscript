@@ -151,3 +151,6 @@ downloadPanel.appendChild(heading);
 downloadPanel.appendChild(articleButton);
 downloadPanel.appendChild(pageButton);
 downloadPanel.appendChild(progressPara);
+
+// To get around memory issues, manual edit the js file 
+// decode: (e) => JPEG.decode(e, { maxMemoryUsageInMB: 1024 })

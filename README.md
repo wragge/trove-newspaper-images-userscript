@@ -16,7 +16,7 @@ If you click on the 'Page' button, the userscript displays a thumbnail version o
 
 ## Installation
 
-To run this userscript, you first need to add a userscript manager to your browser. Userscript managers such as [ViolentMonkey](http://violentmonkey.com/) and [Tampermonkey](https://www.tampermonkey.net/) are available as extensions for most browsers.
+To run this userscript, you first need to add a userscript manager to your browser. Userscript managers such as [Tampermonkey](https://www.tampermonkey.net/) are available as extensions for most browsers. (Note that if you install Tampermonkey in Chrome, you also have [to explictly allow it to run userscripts](https://www.tampermonkey.net/faq.php?q=Q209) in the extension settings.)
 
 Once you've installed a userscript manager, you can add this userscript. I've included two versions:
 

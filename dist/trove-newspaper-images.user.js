@@ -5443,7 +5443,7 @@
 			formatAsRGBA: !0,
 			tolerantDecoding: !0,
 			maxResolutionInMP: 100,
-			maxMemoryUsageInMB: 512,
+			maxMemoryUsageInMB: 1024,
 			...t
 		}, r = new Uint8Array(e), n = new JpegImage();
 		n.opts = i, JpegImage.resetMaxMemoryUsage(1024 * i.maxMemoryUsageInMB * 1024), n.parse(r);
