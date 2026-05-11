@@ -10,7 +10,7 @@ If you click on the 'Article' button, the userscript generates a cropped and mas
 
 ![Screenshot of Trove newspaper interface showing the thumbnail of an article image displayed in the Download panel](https://updates.timsherratt.org/uploads/2026/trove-newspapers-userscript-article.png)
 
-If you click on the 'Page' button, the userscript displays a thumbnail version of the high-resolution page image in the panel – just click on the thumbnail to download the page image as a JPEG file.
+If you click on the 'Page' button, the userscript displays a thumbnail version of the high-resolution page image in the panel – just click on the thumbnail to download the full page image as a JPEG file.
 
 ![Screenshot of Trove newspaper interface showing the thumbnail of a page image displayed in the Download panel](https://updates.timsherratt.org/uploads/2026/trove-newspapers-page.png)
 
@@ -18,12 +18,12 @@ If you click on the 'Page' button, the userscript displays a thumbnail version o
 
 To run this userscript, you first need to add a userscript manager to your browser. Userscript managers such as [ViolentMonkey](http://violentmonkey.com/) and [Tampermonkey](https://www.tampermonkey.net/) are available as extensions for most browsers.
 
-Once you've got a userscript manager, you can install this userscript. I've included two versions of the userscript:
+Once you've installed a userscript manager, you can add this userscript. I've included two versions:
 
 - [minified](https://github.com/wragge/trove-newspaper-images-userscript/blob/main/dist/trove-newspaper-images.min.user.js) (smaller file size, hard to read)
 - [un-minified](https://github.com/wragge/trove-newspaper-images-userscript/blob/main/dist/trove-newspaper-images.user.js) (larger file size, best if you want to read or edit the code)
 
-Click on one of the links above to open the userscript page. Then click on the 'Raw' button at the top-right of the file viewer. Your userscript manager will intercept this link and ask you if you want to install the userscript. Click on the 'Install' button and you're done.
+Click on one of the links above to open the userscript page in GitHub. Then click on the 'Raw' button at the top-right of the file viewer. Your userscript manager will intercept this link and ask you if you want to install the userscript. Click on the 'Install' button and you're done!
 
 ## Notes and acknowledgements
 
