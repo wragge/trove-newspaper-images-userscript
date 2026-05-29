@@ -15,18 +15,18 @@ function getPageId(zones) {
 }
 
 // Display a thumbnail and link to download the image.
-async function displayDownload(imageData, imageType, imageId) {
+async function displayDownload(imageUrl, imageType, imageId) {
     // Target to add download links
     let downloadPanel = document.querySelector("form.renditions").parentElement;
     
     // Create thumbnail image
     let imageElem = document.createElement("img");
-    imageElem.setAttribute("src", imageData);
+    imageElem.setAttribute("src", imageUrl);
     imageElem.setAttribute("width", 200);
     
     // Create a download link
     let downLink = document.createElement("a");
-    downLink.setAttribute("href", imageData);
+    downLink.setAttribute("href", imageUrl);
     downLink.setAttribute("download", `nla.news-${imageType}${imageId}.jpg`);
     
     // Enclose thumbnail in link
@@ -55,6 +55,8 @@ async function fullPageImage () {
 
 // Crop and mask article, add download links
 async function croppedImage() {
+    const scale = parseInt(document.querySelector("#article-scale-select").value) / 10;
+
     // Add in progress message
     let progressPara = document.querySelector("#image-load-progress");
     progressPara.innerText = "Preparing image...";
@@ -73,10 +75,9 @@ async function croppedImage() {
     
     // Download full sized page image
     const image = await Jimp.read(`https://trove.nla.gov.au/imageservice/nla.news-page${pageId}/level7`);
+    image.scale(scale);
     
-    // Create a new image with the same dimensions
-    const newImage = new Jimp({ width: image.width, height: image.height, color: 0xffffffff });
-    
+    const boxes = [];
     // Loop through zones getting the bbox for each
     // Use the zone bboxes to extract all the sections of an article from a page image
     // Then assemble the sections in a new image
@@ -103,21 +104,38 @@ async function croppedImage() {
         }
         
         // Crop out the section of the image that corresponds to the current zone
-        let box = {x: zLeft, y: zTop, w: zWidth, h: zHeight};
-        let crop = image.clone().crop(box);
-        
-        // Paste the cropped section into the new image
-        newImage.composite(crop, box.x, box.y);
+        let box = {x: zLeft * scale, y: zTop * scale, w: zWidth * scale, h: zHeight * scale};
+        boxes.push(box)
     }
-    // Crop the new image using the article bbox
-    let cropped = newImage.crop({x: left, y: top, w: right - left, h: bottom - top});
+    console.log("crop image");
+    let cropped = image.crop({
+        x: left * scale,
+        y: top * scale,
+        w: (right - left) * scale,
+        h: (bottom - top) * scale
+    });
+    console.log("new image");
+    const newImage = new Jimp({
+        width: cropped.width,
+        height: cropped.height,
+        color: 4294967295
+    });
+    for (let box of boxes) {
+        let croppedBox = {x: box.x - (left * scale), y: box.y - (top * scale), w: box.w, h: box.h};
+        let crop = cropped.clone().crop(croppedBox);
+        //newImage.composite(crop, box.x, box.y);
+        newImage.blit({src: crop, x: box.x, y: box.y});
+    }
     
     // Get the article identifier from the url
     const articleId = document.location.href.match(/article\/(\d+)/)[1];
     
-    // Convert the image to base 64
-    const base64 = await cropped.getBase64("image/jpeg", {quality: 90});
-    await displayDownload(base64, "article", `${articleId}-page${pageId}`);
+    // Convert the image to buffer
+    // I think this might give marginally better performance than converting to base64
+    const buffer = await cropped.getBuffer("image/jpeg", {quality: 90});
+    const blob = new Blob([buffer], { type: "image/jpeg" });
+    const imageUrl = URL.createObjectURL(blob);
+    await displayDownload(imageUrl, "article", `${articleId}-page${pageId}`);
     progressPara.innerText = "";
 }
 
@@ -144,13 +162,27 @@ pageButton.addEventListener("click", await fullPageImage);
 pageButton.innerText = "Page";
 pageButton.style.marginLeft = "5px";
 
+let scaleSelect = document.createElement("select");
+for (let i = 1; i<=10; i++){
+    let opt = document.createElement('option');
+    opt.value = i;
+    opt.text = "Scale: " + i / 10;
+    scaleSelect.appendChild(opt);
+}
+scaleSelect.style.color = "#555555";
+scaleSelect.style.marginLeft = "5px";
+scaleSelect.style.padding = "2px";
+scaleSelect.setAttribute("id", "article-scale-select");
+scaleSelect.selectedIndex = 4;
+
 let progressPara = document.createElement("p");
 progressPara.setAttribute("id", "image-load-progress");
 progressPara.style.marginTop = "5px";
 downloadPanel.appendChild(heading);
 downloadPanel.appendChild(articleButton);
+downloadPanel.appendChild(scaleSelect);
 downloadPanel.appendChild(pageButton);
 downloadPanel.appendChild(progressPara);
 
 // To get around memory issues, manual edit the js file 
-// decode: (e) => JPEG.decode(e, { maxMemoryUsageInMB: 1024 })
+//maxMemoryUsageInMB:512
