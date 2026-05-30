@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         trove-newspaper-images
 // @namespace    glam-workbench.net/trove-newspaper-images
-// @version      0.2.0
+// @version      0.3.0
 // @author       Tim Sherratt (http://timsherratt.au)
 // @description  Adds new options to the Trove newspaper interface that let you download an article or page as a high-res image.
 // @match        https://trove.nla.gov.au/newspaper/article/*
@@ -5443,7 +5443,7 @@
 			formatAsRGBA: !0,
 			tolerantDecoding: !0,
 			maxResolutionInMP: 100,
-			maxMemoryUsageInMB: 1024,
+			maxMemoryUsageInMB: 512,
 			...t
 		}, r = new Uint8Array(e), n = new JpegImage();
 		n.opts = i, JpegImage.resetMaxMemoryUsage(1024 * i.maxMemoryUsageInMB * 1024), n.parse(r);
@@ -28520,11 +28520,17 @@ while (n === u[++a] && n === u[++a] && n === u[++a] && n === u[++a] && n === u[+
 		textPara.appendChild(textLink);
 		downloadPanel.appendChild(textPara);
 	}
-	async function fullPageImage() {
+	async function getPageImage() {
 		const pageId = getPageId();
 		await displayDownload(`https://trove.nla.gov.au/imageservice/nla.news-page${pageId}/level7`, "page", pageId);
 	}
-	async function croppedImage() {
+	async function prepareArticleImage(image, pageId) {
+		const articleId = document.location.href.match(/article\/(\d+)/)[1];
+		const buffer = await image.getBuffer("image/jpeg", { quality: 90 });
+		const blob = new Blob([buffer], { type: "image/jpeg" });
+		await displayDownload(URL.createObjectURL(blob), "article", `${articleId}-page${pageId}`);
+	}
+	async function getArticleImage() {
 		const scale = parseInt(document.querySelector("#article-scale-select").value) / 10;
 		let progressPara = document.querySelector("#image-load-progress");
 		progressPara.innerText = "Preparing image...";
@@ -28556,37 +28562,34 @@ while (n === u[++a] && n === u[++a] && n === u[++a] && n === u[++a] && n === u[+
 			};
 			boxes.push(box);
 		}
-		console.log("crop image");
 		let cropped = image.crop({
 			x: left * scale,
 			y: top * scale,
 			w: (right - left) * scale,
 			h: (bottom - top) * scale
 		});
-		console.log("new image");
-		const newImage = new Jimp({
-			width: cropped.width,
-			height: cropped.height,
-			color: 4294967295
-		});
-		for (let box of boxes) {
-			let croppedBox = {
-				x: box.x - left * scale,
-				y: box.y - top * scale,
-				w: box.w,
-				h: box.h
-			};
-			let crop = cropped.clone().crop(croppedBox);
-			newImage.blit({
-				src: crop,
-				x: box.x,
-				y: box.y
+		if (maskCheck.checked) {
+			const newImage = new Jimp({
+				width: cropped.width,
+				height: cropped.height,
+				color: 4294967295
 			});
-		}
-		const articleId = document.location.href.match(/article\/(\d+)/)[1];
-		const buffer = await cropped.getBuffer("image/jpeg", { quality: 90 });
-		const blob = new Blob([buffer], { type: "image/jpeg" });
-		await displayDownload(URL.createObjectURL(blob), "article", `${articleId}-page${pageId}`);
+			for (let box of boxes) {
+				let croppedBox = {
+					x: box.x - left * scale,
+					y: box.y - top * scale,
+					w: box.w,
+					h: box.h
+				};
+				let crop = cropped.clone().crop(croppedBox);
+				newImage.blit({
+					src: crop,
+					x: croppedBox.x,
+					y: croppedBox.y
+				});
+			}
+			await prepareArticleImage(newImage, pageId);
+		} else await prepareArticleImage(cropped, pageId);
 		progressPara.innerText = "";
 	}
 	var downloadPanel = document.querySelector("form.renditions").parentElement;
@@ -28597,14 +28600,13 @@ while (n === u[++a] && n === u[++a] && n === u[++a] && n === u[++a] && n === u[+
 	var articleButton = document.createElement("a");
 	articleButton.setAttribute("class", "btn btn-primary btn-sm rendition-loader articleRendition");
 	articleButton.setAttribute("id", "article-image-button");
-	articleButton.addEventListener("click", await(croppedImage));
+	articleButton.addEventListener("click", await(getArticleImage));
 	articleButton.innerText = "Article";
 	var pageButton = document.createElement("a");
 	pageButton.setAttribute("class", "btn btn-primary btn-sm rendition-loader articleRendition");
 	pageButton.setAttribute("id", "page-image-button");
-	pageButton.addEventListener("click", await(fullPageImage));
+	pageButton.addEventListener("click", await(getPageImage));
 	pageButton.innerText = "Page";
-	pageButton.style.marginLeft = "5px";
 	var scaleSelect = document.createElement("select");
 	for (let i = 1; i <= 10; i++) {
 		let opt = document.createElement("option");
@@ -28617,12 +28619,27 @@ while (n === u[++a] && n === u[++a] && n === u[++a] && n === u[++a] && n === u[+
 	scaleSelect.style.padding = "2px";
 	scaleSelect.setAttribute("id", "article-scale-select");
 	scaleSelect.selectedIndex = 4;
+	var maskCheck = document.createElement("input");
+	maskCheck.setAttribute("type", "checkBox");
+	maskCheck.setAttribute("id", "article-mask-checkBox");
+	maskCheck.style.marginLeft = "5px";
+	var maskLabel = document.createElement("label");
+	maskLabel.setAttribute("for", "article-mask-checkBox");
+	maskLabel.innerText = "mask";
+	maskLabel.style.marginLeft = "3px";
 	var progressPara = document.createElement("p");
 	progressPara.setAttribute("id", "image-load-progress");
 	progressPara.style.marginTop = "5px";
+	var articleDiv = document.createElement("div");
+	var pageDiv = document.createElement("div");
+	pageDiv.style.marginTop = "5px";
 	downloadPanel.appendChild(heading);
-	downloadPanel.appendChild(articleButton);
-	downloadPanel.appendChild(scaleSelect);
-	downloadPanel.appendChild(pageButton);
+	articleDiv.appendChild(articleButton);
+	articleDiv.appendChild(scaleSelect);
+	articleDiv.appendChild(maskCheck);
+	articleDiv.appendChild(maskLabel);
+	downloadPanel.appendChild(articleDiv);
+	pageDiv.appendChild(pageButton);
+	downloadPanel.appendChild(pageDiv);
 	downloadPanel.appendChild(progressPara);
 })();

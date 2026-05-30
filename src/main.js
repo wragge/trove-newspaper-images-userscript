@@ -46,15 +46,29 @@ async function displayDownload(imageUrl, imageType, imageId) {
     downloadPanel.appendChild(textPara);
 }
 
-// Add download links for full page image
-async function fullPageImage () {
+// Get a full page image url
+async function getPageImage () {
     const pageId = getPageId();
     const pageUrl = `https://trove.nla.gov.au/imageservice/nla.news-page${pageId}/level7`;
     await displayDownload(pageUrl, "page", pageId);
 }
 
-// Crop and mask article, add download links
-async function croppedImage() {
+// Convert the Jimp image to a data Url
+async function prepareArticleImage(image, pageId) {
+    // Get the article identifier from the url
+    const articleId = document.location.href.match(/article\/(\d+)/)[1];
+    
+    // Convert the image to buffer
+    // I think this might give marginally better performance than converting to base64 directly
+    const buffer = await image.getBuffer("image/jpeg", {quality: 90});
+    const blob = new Blob([buffer], { type: "image/jpeg" });
+    // Create data Url
+    const imageUrl = URL.createObjectURL(blob);
+    await displayDownload(imageUrl, "article", `${articleId}-page${pageId}`);  
+}
+
+// Crop and (optionally) mask article
+async function getArticleImage() {
     const scale = parseInt(document.querySelector("#article-scale-select").value) / 10;
 
     // Add in progress message
@@ -75,12 +89,12 @@ async function croppedImage() {
     
     // Download full sized page image
     const image = await Jimp.read(`https://trove.nla.gov.au/imageservice/nla.news-page${pageId}/level7`);
+    // Resize the page image
     image.scale(scale);
     
     const boxes = [];
     // Loop through zones getting the bbox for each
-    // Use the zone bboxes to extract all the sections of an article from a page image
-    // Then assemble the sections in a new image
+
     for (let zone of zones) {
         let zLeft = parseInt(zone.getAttribute("data-x"));
         let zTop = parseInt(zone.getAttribute("data-y"));
@@ -102,40 +116,37 @@ async function croppedImage() {
         if (zBottom > bottom) {
             bottom = zBottom;
         }
-        
-        // Crop out the section of the image that corresponds to the current zone
+        // Save the bbox for each zone
         let box = {x: zLeft * scale, y: zTop * scale, w: zWidth * scale, h: zHeight * scale};
         boxes.push(box)
     }
-    console.log("crop image");
+    // Crop the page image using the zone coordinates
+    // console.log("crop image");
     let cropped = image.crop({
         x: left * scale,
         y: top * scale,
         w: (right - left) * scale,
         h: (bottom - top) * scale
     });
-    console.log("new image");
-    const newImage = new Jimp({
-        width: cropped.width,
-        height: cropped.height,
-        color: 4294967295
-    });
-    for (let box of boxes) {
-        let croppedBox = {x: box.x - (left * scale), y: box.y - (top * scale), w: box.w, h: box.h};
-        let crop = cropped.clone().crop(croppedBox);
-        //newImage.composite(crop, box.x, box.y);
-        newImage.blit({src: crop, x: box.x, y: box.y});
+    // If mask is true, use the zone bboxes to copy all the sections of an article from the cropped page
+    // and paste the sections into a new image.
+    // This creates a new image with only content from the selected article.
+    if (maskCheck.checked) {
+        // console.log("new image");
+        const newImage = new Jimp({
+            width: cropped.width,
+            height: cropped.height,
+            color: 4294967295
+        });
+        for (let box of boxes) {
+            let croppedBox = {x: box.x - (left * scale), y: box.y - (top * scale), w: box.w, h: box.h};
+            let crop = cropped.clone().crop(croppedBox);
+            newImage.blit({src: crop, x: croppedBox.x, y: croppedBox.y});
+        }
+        await prepareArticleImage(newImage, pageId);
+    } else {
+        await prepareArticleImage(cropped, pageId);
     }
-    
-    // Get the article identifier from the url
-    const articleId = document.location.href.match(/article\/(\d+)/)[1];
-    
-    // Convert the image to buffer
-    // I think this might give marginally better performance than converting to base64
-    const buffer = await cropped.getBuffer("image/jpeg", {quality: 90});
-    const blob = new Blob([buffer], { type: "image/jpeg" });
-    const imageUrl = URL.createObjectURL(blob);
-    await displayDownload(imageUrl, "article", `${articleId}-page${pageId}`);
     progressPara.innerText = "";
 }
 
@@ -152,15 +163,15 @@ heading.style.fontFamily = '"Source Sans Variable", sans-serif';
 let articleButton = document.createElement("a");
 articleButton.setAttribute("class", "btn btn-primary btn-sm rendition-loader articleRendition");
 articleButton.setAttribute("id", "article-image-button");
-articleButton.addEventListener("click", await croppedImage);
+articleButton.addEventListener("click", await getArticleImage);
 articleButton.innerText = "Article";
 
 let pageButton = document.createElement("a");
 pageButton.setAttribute("class", "btn btn-primary btn-sm rendition-loader articleRendition");
 pageButton.setAttribute("id", "page-image-button");
-pageButton.addEventListener("click", await fullPageImage);
+pageButton.addEventListener("click", await getPageImage);
 pageButton.innerText = "Page";
-pageButton.style.marginLeft = "5px";
+
 
 let scaleSelect = document.createElement("select");
 for (let i = 1; i<=10; i++){
@@ -175,13 +186,33 @@ scaleSelect.style.padding = "2px";
 scaleSelect.setAttribute("id", "article-scale-select");
 scaleSelect.selectedIndex = 4;
 
+let maskCheck = document.createElement("input");
+maskCheck.setAttribute("type", "checkBox");
+maskCheck.setAttribute("id", "article-mask-checkBox");
+maskCheck.style.marginLeft = "5px";
+
+let maskLabel = document.createElement("label");
+maskLabel.setAttribute("for", "article-mask-checkBox");
+maskLabel.innerText = "mask";
+maskLabel.style.marginLeft = "3px";
+
 let progressPara = document.createElement("p");
 progressPara.setAttribute("id", "image-load-progress");
 progressPara.style.marginTop = "5px";
+
+let articleDiv = document.createElement("div");
+let pageDiv = document.createElement("div");
+pageDiv.style.marginTop = "5px";
+
 downloadPanel.appendChild(heading);
-downloadPanel.appendChild(articleButton);
-downloadPanel.appendChild(scaleSelect);
-downloadPanel.appendChild(pageButton);
+articleDiv.appendChild(articleButton);
+articleDiv.appendChild(scaleSelect);
+articleDiv.appendChild(maskCheck);
+articleDiv.appendChild(maskLabel);
+downloadPanel.appendChild(articleDiv)
+pageDiv.appendChild(pageButton);
+downloadPanel.appendChild(pageDiv);
+
 downloadPanel.appendChild(progressPara);
 
 // To get around memory issues, manual edit the js file 
