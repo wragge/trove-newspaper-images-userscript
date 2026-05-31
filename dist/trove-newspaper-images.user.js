@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         trove-newspaper-images
 // @namespace    glam-workbench.net/trove-newspaper-images
-// @version      0.3.0
+// @version      0.3.1
 // @author       Tim Sherratt (http://timsherratt.au)
 // @description  Adds new options to the Trove newspaper interface that let you download an article or page as a high-res image.
 // @match        https://trove.nla.gov.au/newspaper/article/*
@@ -28576,10 +28576,10 @@ while (n === u[++a] && n === u[++a] && n === u[++a] && n === u[++a] && n === u[+
 			});
 			for (let box of boxes) {
 				let croppedBox = {
-					x: box.x - left * scale,
-					y: box.y - top * scale,
-					w: box.w,
-					h: box.h
+					x: Math.floor(box.x - left * scale),
+					y: Math.floor(box.y - top * scale),
+					w: Math.floor(box.w),
+					h: Math.floor(box.h)
 				};
 				let crop = cropped.clone().crop(croppedBox);
 				newImage.blit({

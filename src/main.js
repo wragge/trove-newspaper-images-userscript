@@ -139,7 +139,7 @@ async function getArticleImage() {
             color: 4294967295
         });
         for (let box of boxes) {
-            let croppedBox = {x: box.x - (left * scale), y: box.y - (top * scale), w: box.w, h: box.h};
+            let croppedBox = {x: Math.floor(box.x - (left * scale)), y: Math.floor(box.y - (top * scale)), w: Math.floor(box.w), h: Math.floor(box.h)};
             let crop = cropped.clone().crop(croppedBox);
             newImage.blit({src: crop, x: croppedBox.x, y: croppedBox.y});
         }

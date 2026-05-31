@@ -1,7 +1,7 @@
 {
     "name": "trove-newspaper-images",
     "private": true,
-    "version": "0.3.0",
+    "version": "0.3.1",
     "author": "Tim Sherratt (http://timsherratt.au)",
     "description": "Adds new options to the Trove newspaper interface that let you download an article or page as a high-res image.",
     "type": "module",
