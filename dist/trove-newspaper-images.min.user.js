@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         trove-newspaper-images
 // @namespace    glam-workbench.net/trove-newspaper-images
-// @version      0.3.1
+// @version      0.3.2
 // @author       Tim Sherratt (http://timsherratt.au)
 // @description  Adds new options to the Trove newspaper interface that let you download an article or page as a high-res image.
 // @match        https://trove.nla.gov.au/newspaper/article/*
