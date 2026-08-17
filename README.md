@@ -1,18 +1,20 @@
 # trove-newspaper-images-userscript
 
+**See [this blog post](https://updates.timsherratt.org/2026/08/17/a-new-way-of-downloading.html) for more information.**
+
 Ever wanted an easy way to save a newspaper article in Trove as a high-resolution image? This repository provides a userscript that adds new download options to Trove's newspaper interface – making it easy to save images of articles and pages.
 
 When this userscript runs, it adds a new 'Download image' section to the 'Download' panel in Trove's newspaper interface. This section includes two buttons, 'Article' and 'Page'.
 
-![Screenshot of Trove newspaper interface showing the new section added to the Download panel and the two new buttons](https://updates.timsherratt.org/uploads/2026/trove-newspapers-userscript-buttons.jpg)
+![Screenshot of Trove newspaper interface showing the new section added to the Download panel and the two new buttons](https://updates.timsherratt.org/uploads/2026/image-userscript-1.jpg)
 
 If you click on the 'Article' button, the userscript generates a cropped and masked version of the article, extracted from the high-resolution page image. When it's ready, a thumbnail version of the cropped article is displayed in the panel – just click on the thumbnail to download the article image as a JPEG file.
 
-![Screenshot of Trove newspaper interface showing the thumbnail of an article image displayed in the Download panel](https://updates.timsherratt.org/uploads/2026/trove-newspapers-userscript-article.jpg)
+![Screenshot of Trove newspaper interface showing the thumbnail of an article image displayed in the Download panel](https://updates.timsherratt.org/uploads/2026/image-userscript-2.jpg)
 
 If you click on the 'Page' button, the userscript displays a thumbnail version of the high-resolution page image in the panel – just click on the thumbnail to download the full page image as a JPEG file.
 
-![Screenshot of Trove newspaper interface showing the thumbnail of a page image displayed in the Download panel](https://updates.timsherratt.org/uploads/2026/trove-newspapers-page.jpg)
+![Screenshot of Trove newspaper interface showing the thumbnail of a page image displayed in the Download panel](https://updates.timsherratt.org/uploads/2026/image-userscript-3.jpg)
 
 ## Installation
 
